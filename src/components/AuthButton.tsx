@@ -35,7 +35,7 @@ export default function AuthButton({ variant = 'text', className = '' }: AuthBut
     return isAuthenticated ? (
       <button
         onClick={handleLogoutClick}
-        className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${className}`}
+        className={`p-2 rounded-md text-[var(--mi-orange)] hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors ${className}`}
         title="退出登录"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -45,7 +45,7 @@ export default function AuthButton({ variant = 'text', className = '' }: AuthBut
     ) : (
       <button
         onClick={handleLoginClick}
-        className={`p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${className}`}
+        className={`p-2 rounded-md text-[var(--mi-orange)] hover:bg-orange-50 dark:hover:bg-gray-800 transition-colors ${className}`}
         title="管理员登录"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,10 +58,10 @@ export default function AuthButton({ variant = 'text', className = '' }: AuthBut
   // 文本模式（默认）
   return isAuthenticated ? (
     <div className="flex items-center">
-      <span className="text-green-600 dark:text-green-400 text-sm mr-2">已登录</span>
+      <span className="mi-tag mi-tag-orange text-xs mr-2">已登录</span>
       <button
         onClick={handleLogoutClick}
-        className={`text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors ${className}`}
+        className="mi-btn-text py-1 px-2"
       >
         退出
       </button>
@@ -69,7 +69,7 @@ export default function AuthButton({ variant = 'text', className = '' }: AuthBut
   ) : (
     <button
       onClick={handleLoginClick}
-      className={`text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${className}`}
+      className="mi-btn-secondary py-1 px-3 text-sm"
     >
       管理员登录
     </button>

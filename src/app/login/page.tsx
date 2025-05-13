@@ -30,13 +30,13 @@ export default function Login() {
 
   if (isAuthenticated) {
     return (
-      <main className="py-8 px-4 max-w-md mx-auto">
-        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 text-center">
-          <h1 className="text-2xl font-bold mb-4">您已登录</h1>
-          <p className="mb-4">您已经成功登录为管理员。</p>
+      <main className="py-12 px-4 max-w-md mx-auto mi-fade-in">
+        <div className="mi-card p-8 text-center">
+          <h1 className="text-2xl font-bold mb-6">您已登录</h1>
+          <p className="mb-6 text-gray-600 dark:text-gray-300">您已经成功登录为管理员。</p>
           <button
             onClick={logout}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            className="mi-btn-primary"
           >
             退出登录
           </button>
@@ -46,16 +46,18 @@ export default function Login() {
   }
 
   return (
-    <main className="py-8 px-4 max-w-md mx-auto">
-      <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
-        <div className="relative mb-6">
-          <h1 className="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">
+    <main className="py-12 px-4 max-w-md mx-auto mi-fade-in">
+      <div className="mi-card p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-semibold mi-gradient-text">
             管理员登录
           </h1>
-          <div className="absolute -inset-1 blur-sm opacity-30 bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg -z-10"></div>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            请输入管理员密码以访问完整功能
+          </p>
         </div>
         
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-6">
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-3 rounded-md">
               {error}
@@ -71,7 +73,7 @@ export default function Login() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="mi-input"
               placeholder="请输入密码"
               required
             />
@@ -79,16 +81,16 @@ export default function Login() {
           
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="mi-btn-primary w-full py-2.5"
           >
             登录
           </button>
         </form>
         
-        <div className="mt-4 text-center">
+        <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+            className="text-[var(--mi-orange)] hover:underline text-sm"
           >
             返回首页
           </Link>

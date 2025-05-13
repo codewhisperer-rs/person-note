@@ -319,7 +319,7 @@ export default function NotePage() {
         </div>
         
         {/* 侧边目录 - 右侧区域 */}
-        {headings.length > 0 && (
+      {headings.length > 0 && (
           <div className="lg:w-1/4 order-1 lg:order-2">
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sticky top-4">
               <div className="flex justify-between items-center mb-3">
@@ -335,7 +335,7 @@ export default function NotePage() {
               {showToc && (
                 <nav className="toc">
                   <ul className="space-y-2 pl-0 text-sm">
-                    {headings.map((heading) => (
+              {headings.map((heading) => (
                       <li 
                         key={heading.id} 
                         style={{ paddingLeft: `${(heading.level - 1) * 0.75}rem` }}
@@ -346,17 +346,17 @@ export default function NotePage() {
                         <a 
                           href={`#${heading.id}`} 
                           className="block py-1"
-                        >
-                          {heading.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
               )}
             </div>
           </div>
-        )}
+      )}
       </div>
     </div>
   );
