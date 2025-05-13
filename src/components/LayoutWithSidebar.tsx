@@ -31,10 +31,10 @@ const LayoutWithSidebar: React.FC<LayoutWithSidebarProps> = ({ children, notesDa
       <button
         className="md:hidden fixed bottom-4 right-4 z-50 p-3 bg-blue-600 text-white rounded-full shadow-lg"
         onClick={toggleSidebar}
-        aria-label="Toggle Sidebar"
+        aria-label="切换侧边栏"
       >
         {/* You can use an icon here, e.g., a hamburger icon */}
-        Menu
+        菜单
       </button>
 
       {/* Sidebar (Mobile overlay and Desktop static) */}

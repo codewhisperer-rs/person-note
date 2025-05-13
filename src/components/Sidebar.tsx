@@ -18,13 +18,19 @@ interface SidebarProps {
 // Sidebar component now receives data as a prop
 const Sidebar: React.FC<SidebarProps> = ({ groupedNotes }) => {
   const sortedCategories = Object.keys(groupedNotes).sort(); // Sort categories alphabetically
+  
+  // 将英文分类名转换为中文
+  const categoryTranslation: {[key: string]: string} = {
+    'Uncategorized': '未分类',
+    'General': '常规'
+  };
 
   return (
     <nav className="flex flex-col space-y-6">
       {sortedCategories.map(category => (
         <div key={category}>
           <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-            {category}
+            {categoryTranslation[category] || category}
           </h3>
           <ul className="flex flex-col space-y-1">
             {groupedNotes[category].map((note) => (
@@ -43,16 +49,16 @@ const Sidebar: React.FC<SidebarProps> = ({ groupedNotes }) => {
 
       {/* Optional: Add other non-note links here if not grouped */}
        <div>
-         <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300 uppercase tracking-wide">General</h3>
+         <h3 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300 uppercase tracking-wide">常规</h3>
          <ul className="flex flex-col space-y-1">
             <li>
                 <Link href="/about" className="block text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">
-                About Me
+                关于我
                 </Link>
             </li>
              <li>
                 <Link href="/" className="block text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm">
-                Home
+                首页
                 </Link>
             </li>
          </ul>

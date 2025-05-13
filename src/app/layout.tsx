@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My Personal Website", // Updated title
-  description: "A personal website with study notes.", // Updated description
+  title: "我的个人网站", // Updated title
+  description: "一个包含学习笔记的个人网站", // Updated description
 };
 
 // Define the directory where your notes are stored
@@ -79,24 +79,24 @@ export default function RootLayout({
   const notesData = getNotesSidebarData();
 
   return (
-    <html lang="en">
+    <html lang="zh">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <nav className="bg-gray-100 dark:bg-gray-800 p-4 shadow-md">
           <div className="container mx-auto flex justify-between">
             <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
-              My Website
+              我的网站
             </Link>
             <div>
               <Link href="/" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 mr-4">
-                Home
+                首页
               </Link>
               <Link href="/about" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 mr-4">
-                About Me
+                关于我
               </Link>
               <Link href="/notes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                Study Notes
+                学习笔记
               </Link>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function RootLayout({
         <LayoutWithSidebar notesData={notesData}>{children}</LayoutWithSidebar>
 
         <footer className="bg-gray-100 dark:bg-gray-800 mt-8 py-4 text-center text-gray-600 dark:text-gray-300 text-sm">
-          © {new Date().getFullYear()} My Personal Website. All rights reserved.
+          © {new Date().getFullYear()} 我的个人网站. 保留所有权利.
         </footer>
       </body>
     </html>
