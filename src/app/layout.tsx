@@ -95,8 +95,11 @@ export default function RootLayout({
               <Link href="/about" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 mr-4">
                 关于我
               </Link>
-              <Link href="/notes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+              <Link href="/notes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 mr-4">
                 学习笔记
+              </Link>
+              <Link href="/categories/manage" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                分类管理
               </Link>
             </div>
           </div>
