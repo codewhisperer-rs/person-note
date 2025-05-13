@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 
 interface NoteDataForSidebar {
@@ -15,11 +15,73 @@ interface GroupedNotesForSidebar {
 
 interface LayoutWithSidebarProps {
   children: React.ReactNode;
-  notesData: GroupedNotesForSidebar; // Accept notesData as prop
 }
 
-const LayoutWithSidebar: React.FC<LayoutWithSidebarProps> = ({ children, notesData }) => {
+// 从localStorage获取笔记数据并整理成侧边栏所需格式
+const getNotesForSidebar = (): GroupedNotesForSidebar => {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+  
+  const storedNotes = localStorage.getItem('user_notes');
+  if (!storedNotes) {
+    return {};
+  }
+  
+  try {
+    const notes = JSON.parse(storedNotes);
+    const groupedNotes: GroupedNotesForSidebar = {};
+    
+    notes.forEach((note: any) => {
+      const category = note.category || 'Uncategorized';
+      if (!groupedNotes[category]) {
+        groupedNotes[category] = [];
+      }
+      
+      groupedNotes[category].push({
+        slug: note.slug,
+        title: note.title,
+        category: note.category
+      });
+    });
+    
+    return groupedNotes;
+  } catch (err) {
+    console.error('解析笔记数据失败:', err);
+    return {};
+  }
+};
+
+const LayoutWithSidebar: React.FC<LayoutWithSidebarProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [notesData, setNotesData] = useState<GroupedNotesForSidebar>({});
+
+  useEffect(() => {
+    // 获取笔记数据
+    const data = getNotesForSidebar();
+    setNotesData(data);
+    
+    // 监听localStorage变化，更新笔记数据
+    const handleStorageChange = () => {
+      const updatedData = getNotesForSidebar();
+      setNotesData(updatedData);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // 自定义事件，用于触发笔记数据刷新
+    const handleNoteChange = () => {
+      const updatedData = getNotesForSidebar();
+      setNotesData(updatedData);
+    };
+    
+    window.addEventListener('noteDataChanged', handleNoteChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('noteDataChanged', handleNoteChange);
+    };
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -41,7 +103,7 @@ const LayoutWithSidebar: React.FC<LayoutWithSidebarProps> = ({ children, notesDa
       <aside
         className={`fixed inset-y-0 left-0 w-64 bg-gray-50 dark:bg-gray-900 p-4 border-r border-gray-200 dark:border-gray-700 z-40 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:block transition-transform ease-in-out duration-300`}
       >
-        <Sidebar groupedNotes={notesData} /> {/* Pass notesData to Sidebar */}
+        <Sidebar groupedNotes={notesData} />
       </aside>
 
       {/* Main Content Area */}

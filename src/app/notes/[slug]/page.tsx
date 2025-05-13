@@ -1,147 +1,363 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import { MDXRemote } from 'next-mdx-remote/rsc';
-import rehypePrettyCode from 'rehype-pretty-code';
-import Admonition from '@/components/Admonition';
-import Tag from '@/components/Tag';
+'use client';
 
-// Define the directory where your notes are stored
-const notesDirectory = path.join(process.cwd(), 'content/notes');
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 
-interface Heading {
-  level: number;
-  text: string;
+// 定义笔记类型接口
+interface Note {
   slug: string;
+  title: string;
+  date: string;
+  summary: string;
+  content: string;
+  tags: string[];
+  category: string;
 }
 
-// Simple slugification function
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/[^\w-]+/g, '') // Remove all non-word chars
-    .replace(/--+/g, '-') // Replace multiple - with single -
-    .replace(/^-+/, '') // Trim - from start of text
-    .replace(/-+$/, ''); // Trim - from end of text
+// 定义标题结构接口
+interface Heading {
+  id: string;
+  text: string;
+  level: number;
 }
 
-// Function to get the data for a specific note, including TOC
-async function getNoteData(slug: string) {
-  const fullPath = path.join(notesDirectory, `${slug}.mdx`);
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-
-  // Use gray-matter to parse the post metadata section
-  const { data, content } = matter(fileContents);
-
-  const headings: Heading[] = [];
-  // Correctly split content by newline characters
-  const lines = content.split('\n');
-
-
-  lines.forEach(line => {
-    const headingMatch = line.match(/^(#+)\s+(.*)$/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const text = headingMatch[2].trim();
-      const headingSlug = slugify(text);
-      headings.push({ level, text, slug: headingSlug });
+// 从localStorage获取指定笔记
+const getNoteBySlug = async (slug: string): Promise<Note> => {
+  if (typeof window === 'undefined') {
+    throw new Error('笔记未找到');
+  }
+  
+  const storedNotes = localStorage.getItem('user_notes');
+  if (!storedNotes) {
+    throw new Error('笔记未找到');
+  }
+  
+  try {
+    const notes: Note[] = JSON.parse(storedNotes);
+    const note = notes.find(n => n.slug === slug);
+    
+    if (!note) {
+      throw new Error('笔记未找到');
     }
-  });
-
-  return {
-    slug,
-    frontmatter: data as { date: string; title: string; tags?: string[]; summary?: string },
-    content, // Pass content directly for RSC
-    headings, // Pass extracted headings
-  };
-}
-
-// Generate possible slugs for static site generation
-export async function generateStaticParams() {
-  const fileNames = fs.readdirSync(notesDirectory);
-  return fileNames.map((fileName) => ({
-    slug: fileName.replace(/\.mdx$/, ''),
-  }));
-}
-
-// Generate metadata for the page
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  // Await params before accessing properties
-  const { slug } = await params; 
-  const noteData = await getNoteData(slug);
-  return {
-    title: noteData.frontmatter.title,
-  };
-}
-
-// Define custom components to be used in MDX
-const components = {
-  Admonition,
-  // Add other custom components here later
+    
+    return note;
+  } catch (err) {
+    console.error('获取笔记失败:', err);
+    throw new Error('笔记未找到');
+  }
 };
 
-// Component to render a single note
-export default async function NotePage({ params }: { params: { slug: string } }) {
-  // Await params before accessing properties
-  const { slug } = await params;
-  const noteData = await getNoteData(slug);
-  const { title, date, tags } = noteData.frontmatter;
-  const { content, headings } = noteData;
+export default function NotePage() {
+  const params = useParams();
+  const router = useRouter();
+  const { isAuthenticated, checkAuth } = useAuth();
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  
+  const [note, setNote] = useState<Note | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [headings, setHeadings] = useState<Heading[]>([]);
+  const [showToc, setShowToc] = useState(true);
 
-  // Rehype plugins for MDXRemote (RSC)
-  const options = {
-    rehypePlugins: [
-      [rehypePrettyCode, { theme: 'github-dark' }],
-      // Need to add rehype-slug here to add IDs to headings for TOC links to work
-      // However, integrating rehype-slug with MDXRemote/RSC for manual TOC generation is complex.
-      // A simpler approach for now is to rely on the browser's fragment identifier matching if heading text is unique,
-      // or manually add IDs if necessary in MDX files or a separate rehype step.
-      // For simplicity in this step, we'll generate TOC links based on slugified text,
-      // assuming the browser can link to headings with matching text or that heading IDs are added elsewhere.
-      // A robust solution would involve a rehype plugin to add IDs and collect TOC data.
-    ],
-    components, // Pass custom components here
+  // 提取标题函数
+  const extractHeadings = (content: string) => {
+    const headingRegex = /^(#{1,3})\s+(.+)$/gm;
+    const matches = [...content.matchAll(headingRegex)];
+    
+    return matches.map((match, index) => {
+      const level = match[1].length;
+      const text = match[2].trim();
+      const id = `heading-${index}`;
+      
+      return { id, text, level };
+    });
+  };
+
+  // 加载笔记数据
+  useEffect(() => {
+    const fetchNote = async () => {
+      try {
+        const noteData = await getNoteBySlug(slug);
+        setNote(noteData);
+        
+        // 提取标题生成目录
+        const extractedHeadings = extractHeadings(noteData.content);
+        setHeadings(extractedHeadings);
+        
+        // 如果没有标题，隐藏目录
+        if (extractedHeadings.length === 0) {
+          setShowToc(false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch note:', err);
+        setError('无法找到此笔记');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNote();
+    // 检查用户认证状态
+    checkAuth();
+  }, [slug, checkAuth]);
+
+  // 处理笔记删除
+  const handleDelete = async () => {
+    if (!isAuthenticated) {
+      alert('您需要登录才能删除笔记');
+      return;
+    }
+
+    if (!window.confirm('确定要删除此笔记吗？此操作无法撤销。')) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      // 从localStorage删除笔记
+      const storedNotes = localStorage.getItem('user_notes');
+      if (storedNotes) {
+        const notes: Note[] = JSON.parse(storedNotes);
+        const updatedNotes = notes.filter(note => note.slug !== slug);
+        localStorage.setItem('user_notes', JSON.stringify(updatedNotes));
+        
+        // 触发自定义事件，通知侧边栏更新数据
+        const event = new Event('noteDataChanged');
+        window.dispatchEvent(event);
+      }
+      
+      alert('笔记已成功删除！');
+      router.push('/notes');
+    } catch (err) {
+      console.error('删除笔记失败:', err);
+      setError('删除笔记失败，请重试');
+      setIsDeleting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-8 px-4 max-w-4xl mx-auto">
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-6"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-8"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 px-4 max-w-4xl mx-auto">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 p-6 rounded-md">
+          <h2 className="text-xl font-semibold mb-3">未找到笔记</h2>
+          <p className="mb-4">{error}</p>
+          <p className="text-sm mb-4">您可以尝试以下操作：</p>
+          <ul className="list-disc pl-5 mb-4 space-y-1 text-sm">
+            <li>确认您输入的 URL 是否正确</li>
+            <li>返回笔记列表查看所有可用笔记</li>
+            {isAuthenticated && <li>创建一个新的笔记</li>}
+          </ul>
+          <div className="flex space-x-3 mt-6">
+            <Link 
+              href="/notes" 
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              返回笔记列表
+            </Link>
+            {isAuthenticated && (
+              <Link 
+                href="/categories/add-note" 
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              >
+                创建笔记
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!note) {
+    return (
+      <div className="py-8 px-4 max-w-4xl mx-auto">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 p-4 rounded-md">
+          <h2 className="text-lg font-semibold mb-2">未找到笔记</h2>
+          <p>无法找到请求的笔记。</p>
+          <Link href="/notes" className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block">
+            返回笔记列表
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // 将 Markdown 内容转换为 HTML（简单实现）
+  const renderMarkdown = (content: string) => {
+    // 对内容中的标题添加ID，以支持锚点跳转
+    let processedContent = content;
+    headings.forEach((heading, index) => {
+      const hashes = '#'.repeat(heading.level);
+      const headingText = heading.text;
+      const headingRegex = new RegExp(`^${hashes}\\s+${escapeRegExp(headingText)}$`, 'm');
+      processedContent = processedContent.replace(
+        headingRegex,
+        `${hashes} <a id="${heading.id}" class="anchor-heading"></a>${headingText}`
+      );
+    });
+    
+    // 这里只做了非常简单的转换，实际应用中应使用专业的 Markdown 解析库
+    let html = processedContent
+      // 转换标题
+      .replace(/## <a id="(.*?)" class="anchor-heading"><\/a>(.*)/g, '<h2 id="$1" class="text-2xl font-bold my-4">$2</h2>')
+      .replace(/# <a id="(.*?)" class="anchor-heading"><\/a>(.*)/g, '<h1 id="$1" class="text-3xl font-bold my-4">$2</h1>')
+      .replace(/### <a id="(.*?)" class="anchor-heading"><\/a>(.*)/g, '<h3 id="$1" class="text-xl font-bold my-4">$2</h3>')
+      // 转换粗体
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // 转换斜体
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // 转换代码块
+      .replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto my-4"><code>$1</code></pre>')
+      // 转换行内代码
+      .replace(/`(.*?)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">$1</code>')
+      // 转换段落
+      .split('\n\n')
+      .map(p => `<p class="mb-4">${p}</p>`)
+      .join('');
+    
+    return { __html: html };
+  };
+  
+  // 辅助函数：转义正则表达式中的特殊字符
+  function escapeRegExp(string: string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  
+  // 切换目录显示
+  const toggleToc = () => {
+    setShowToc(!showToc);
   };
 
   return (
-    <div className="flex flex-col md:flex-row">
-      {/* Main Content Area */}
-      <article className="flex-grow prose dark:prose-invert max-w-none px-4 py-8">
-        <h1 className="mb-2">{title}</h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
-          {new Date(date).toLocaleDateString()}
-        </p>
-        {tags && tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1 mb-6">
-            {tags.map((tag) => (
-              <Tag key={tag} text={tag} />
+    <div className="py-8 px-4 max-w-5xl mx-auto">
+      {/* 笔记头部 */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center">
+            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded mr-2">
+              {note.category}
+            </span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">
+              {new Date(note.date).toLocaleDateString('zh-CN')}
+            </span>
+          </div>
+
+          {/* 只对已登录用户显示的编辑/删除按钮 */}
+          {isAuthenticated && (
+            <div className="flex space-x-2">
+              <Link
+                href={`/notes/edit/${slug}`}
+                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+              >
+                编辑
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className={`px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isDeleting ? '删除中...' : '删除'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <h1 className="text-3xl font-bold mb-4">{note.title}</h1>
+
+        {note.tags && note.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-6">
+            {note.tags.map((tag: string, index: number) => (
+              <span
+                key={index}
+                className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded"
+              >
+                {tag}
+              </span>
             ))}
           </div>
         )}
-        <MDXRemote source={content} options={options} components={components} />
-      </article>
+      </div>
 
-      {/* Table of Contents Sidebar */}
-      {headings.length > 0 && (
-        <aside className="w-64 md:w-80 flex-shrink-0 px-4 py-8 hidden md:block sticky top-0 self-start">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Table of Contents</h3>
-          <nav>
-            <ul className="flex flex-col space-y-2">
-              {headings.map((heading) => (
-                <li key={heading.slug} className={`text-sm ${heading.level > 2 ? 'ml-4' : ''}`}>
-                  <a
-                    href={`#${heading.slug}`}
-                    className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                  >
-                    {heading.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-      )}
+      {/* 改为两栏布局：内容区和侧边目录 */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* 笔记内容 - 左侧区域 */}
+        <div className="lg:w-3/4 order-2 lg:order-1">
+          <div className="prose dark:prose-invert max-w-none">
+            <div dangerouslySetInnerHTML={renderMarkdown(note.content)} />
+          </div>
+          
+          {/* 底部导航 */}
+          <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Link
+              href="/notes"
+              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              返回笔记列表
+            </Link>
+          </div>
+        </div>
+        
+        {/* 侧边目录 - 右侧区域 */}
+        {headings.length > 0 && (
+          <div className="lg:w-1/4 order-1 lg:order-2">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sticky top-4">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-lg font-semibold">目录</h2>
+                <button 
+                  onClick={toggleToc}
+                  className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
+                >
+                  {showToc ? '隐藏' : '显示'}
+                </button>
+              </div>
+              
+              {showToc && (
+                <nav className="toc">
+                  <ul className="space-y-2 pl-0 text-sm">
+                    {headings.map((heading) => (
+                      <li 
+                        key={heading.id} 
+                        style={{ paddingLeft: `${(heading.level - 1) * 0.75}rem` }}
+                        className={`hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-1 ${
+                          heading.level === 1 ? 'font-medium' : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        <a 
+                          href={`#${heading.id}`} 
+                          className="block py-1"
+                        >
+                          {heading.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
