@@ -14,11 +14,11 @@ export function FumadocsCard({ title, description, href, icon, className = '' }:
   return (
     <Link
       href={href}
-      className={`group relative overflow-hidden rounded-lg border border-gray-200 bg-white p-5 transition-all hover:border-gray-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950 dark:hover:border-gray-700 ${className}`}
+      className={`group relative overflow-hidden rounded-lg border border-gray-200/50 bg-white/90 backdrop-blur-sm p-5 transition-all hover:border-blue-300 hover:shadow-lg dark:border-gray-800/50 dark:bg-gray-900/80 dark:hover:border-blue-700/70 tech-corners ${className}`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 relative z-10">
         {icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-gray-200/70 bg-gray-50/80 text-gray-500 dark:border-gray-800/70 dark:bg-gray-800/80 dark:text-gray-400">
             {icon}
           </div>
         )}
@@ -27,7 +27,19 @@ export function FumadocsCard({ title, description, href, icon, className = '' }:
           {description && <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>}
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 h-1 w-full scale-x-0 transform bg-gradient-to-r from-[var(--mi-orange)] to-orange-500 transition-transform duration-300 group-hover:scale-x-100" />
+      
+      {/* 右上角科技感装饰 */}
+      <div className="absolute top-0 right-0 w-6 h-6 opacity-60">
+        <div className="absolute top-0 right-0 w-3 h-3 border-r border-t border-blue-400/70"></div>
+      </div>
+      
+      {/* 左下角科技感装饰 */}
+      <div className="absolute bottom-0 left-0 w-6 h-6 opacity-60">
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-l border-b border-blue-400/70"></div>
+      </div>
+      
+      {/* 悬停效果条 */}
+      <div className="absolute bottom-0 left-0 h-1 w-full scale-x-0 transform bg-gradient-to-r from-blue-500 to-purple-500 transition-transform duration-300 group-hover:scale-x-100" />
     </Link>
   );
 }

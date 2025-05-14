@@ -72,33 +72,33 @@ export default function CategoriesPage() {
 
   return (
     <div className="py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mi-gradient-text">分类浏览</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            按分类查看所有笔记内容
-          </p>
+      <div className="tech-card mb-8">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 flex items-center">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-3"></div>
+              分类浏览
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2 pl-5 border-l border-blue-500/30">
+              按分类查看所有笔记内容
+            </p>
+          </div>
         </div>
-        
-        <Link 
-          href="/categories/manage" 
-          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded hover:opacity-90 transition-opacity"
-        >
-          管理分类
-        </Link>
       </div>
       
-      <FumadocsCardGrid>
-        {categories.map(category => (
-          <FumadocsCard 
-            key={category}
-            title={category} 
-            description={`${noteCounts[category] || 0} 篇笔记`} 
-            href={`/categories/${category}`}
-            icon={<span className="text-xl">📂</span>}
-          />
-        ))}
-      </FumadocsCardGrid>
+      <div className="tech-border p-6 rounded-lg backdrop-blur-sm bg-white/60 dark:bg-gray-900/60">
+        <FumadocsCardGrid>
+          {categories.map(category => (
+            <FumadocsCard 
+              key={category}
+              title={category} 
+              description={`${noteCounts[category] || 0} 篇笔记`} 
+              href={`/categories/${category}`}
+              icon={<span className="text-xl">📂</span>}
+            />
+          ))}
+        </FumadocsCardGrid>
+      </div>
     </div>
   );
 }

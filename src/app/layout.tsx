@@ -6,6 +6,8 @@ import LayoutWithSidebar from '@/components/LayoutWithSidebar'; // Import the ne
 import { AuthProvider } from '@/components/AuthProvider'; // 导入认证提供器
 import AuthButton from '@/components/AuthButton'; // 导入认证按钮组件
 import { TechGridBackground, ParticlesBackground, TechAnchors } from '@/components/TechElements';
+import { CodeBackground, CodeHighlightEffect } from '@/components/CodeBackground';
+import { CornerDecorators } from '@/components/CornerDecorators';
 
 // 定义笔记相关类型
 interface NoteDataForSidebar {
@@ -47,12 +49,15 @@ export default function RootLayout({
         <TechGridBackground />
         <ParticlesBackground />
         <TechAnchors />
+        <CodeBackground />
+        <CodeHighlightEffect />
+        <CornerDecorators />
         
         <AuthProvider>
-          <header className="mi-header backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
+          <header className="mi-header backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 tech-border">
             <div className="mi-container h-16 flex items-center justify-between">
               <Link href="/" className="flex items-center group">
-                <span className="mi-gradient-text text-xl relative overflow-hidden">
+                <span className="text-xl relative overflow-hidden bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-green-500">
                   我的笔记
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </span>
@@ -70,7 +75,11 @@ export default function RootLayout({
                   <span className="relative z-10">学习笔记</span>
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 hover:scale-x-100 transition-transform duration-300"></span>
                 </Link>
-                <AuthButton />
+                <Link href="/categories" className="mi-nav-link tech-hover relative overflow-hidden px-4 py-2">
+                  <span className="relative z-10">分类</span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-cyan-500 transform scale-x-0 hover:scale-x-100 transition-transform duration-300"></span>
+                </Link>
+                {/* 管理员入口已移至 /admin 路由 */}
               </nav>
             </div>
           </header>

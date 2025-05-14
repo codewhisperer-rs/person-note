@@ -80,15 +80,21 @@ const Sidebar: React.FC<SidebarProps> = ({ groupedNotes }) => {
   };
 
   return (
-    <nav className="flex flex-col space-y-4">
+    <nav className="flex flex-col space-y-4 tech-corners tech-border p-2 rounded-lg">
+      {/* <div className="font-medium text-lg mb-3 text-center flex items-center justify-center">
+        <div className="mr-2 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+        <h2>我的笔记分类</h2>
+        <div className="ml-2 w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+      </div> */}
       {allCategories.map(category => (
-        <div key={category} className="border-b border-gray-100 dark:border-gray-800 pb-3">
+        <div key={category} className="border-b border-gray-100/50 dark:border-gray-800/50 pb-3 relative">
+          <div className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-transparent group-hover:w-full transition-all duration-300"></div>
           <div 
             className="flex justify-between items-center cursor-pointer group mb-2"
             onClick={() => toggleCategory(category)}
           >
-            <h3 className="mi-sidebar-item flex items-center py-1.5 px-2 rounded-md w-full">
-              <span className="text-[var(--mi-orange)] mr-2">
+            <h3 className="mi-sidebar-item flex items-center py-1.5 px-2 rounded-md w-full bg-gradient-to-r hover:from-blue-50/10 hover:to-transparent">
+              <span className="text-blue-500 dark:text-blue-400 mr-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path 
                     strokeLinecap="round" 
@@ -113,10 +119,13 @@ const Sidebar: React.FC<SidebarProps> = ({ groupedNotes }) => {
               <li key={note.slug}>
                 <Link
                   href={`/notes/${note.slug}`}
-                  className="text-gray-600 dark:text-gray-400 hover:text-[var(--mi-orange)] dark:hover:text-[var(--mi-orange)] transition-colors text-sm py-1.5 px-2 rounded-md flex items-center"
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors text-sm py-1.5 px-2 rounded-md flex items-center relative group"
                 >
-                  <span className="w-1.5 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mr-2"></span>
-                  {note.title}
+                  <span className="w-1.5 h-1.5 bg-blue-400/50 dark:bg-blue-500/50 rounded-full mr-2 group-hover:scale-125 transition-transform"></span>
+                  <span className="relative">
+                    {note.title}
+                    <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-blue-500/50 group-hover:w-full transition-all duration-300"></span>
+                  </span>
                 </Link>
               </li>
               )) || (

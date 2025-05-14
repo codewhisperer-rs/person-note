@@ -105,9 +105,7 @@ const LayoutWithSidebar: React.FC<LayoutWithSidebarProps> = ({ children }) => {
         className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-sm z-40 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 md:block transition-transform ease-in-out duration-300`}
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-            <div className="text-[var(--mi-orange)] font-medium">我的笔记分类</div>
-          </div>
+          {/* 移除了"我的笔记分类"标题 */}
           <div className="flex-1 overflow-y-auto p-4">
             <Sidebar groupedNotes={notesData} />
           </div>
