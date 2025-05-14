@@ -29,6 +29,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isResetMode, setIsResetMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // 检查是否已经登录
   useEffect(() => {
@@ -43,25 +45,34 @@ export default function Login() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
-    if (login(email, password)) {
-      router.push('/');
-    } else {
-      setError('邮箱或密码不正确');
-    }
+    setTimeout(() => {
+      if (login(email, password)) {
+        router.push('/');
+      } else {
+        setError('邮箱或密码不正确');
+        setIsLoading(false);
+      }
+    }, 800); // 添加短暂延迟以显示加载状态
   };
 
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setMessage('');
+    setIsResetting(true);
 
-    // 发送重置密码邮件
-    if (resetPassword()) {
-      setMessage('密码重置邮件已发送，请检查您的邮件客户端');
-    } else {
-      setError('重置密码失败，请重试');
-    }
+    // 模拟异步操作
+    setTimeout(() => {
+      // 发送重置密码邮件
+      if (resetPassword()) {
+        setMessage('密码重置邮件已发送，请检查您的邮件客户端');
+      } else {
+        setError('重置密码失败，请重试');
+      }
+      setIsResetting(false);
+    }, 1000);
   };
 
   const toggleMode = () => {
@@ -119,9 +130,18 @@ export default function Login() {
             
             <button
               onClick={handleForgotPassword}
-              className="mi-btn-primary w-full py-2.5"
+              disabled={isResetting}
+              className={`mi-btn-primary w-full py-2.5 relative ${isResetting ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              发送重置邮件
+              {isResetting && (
+                <span className="absolute left-1/3 top-1/2 -translate-y-1/2 -translate-x-6 inline-block w-5 h-5">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </span>
+              )}
+              {isResetting ? '处理中...' : '发送重置邮件'}
             </button>
           </div>
         ) : (
@@ -160,9 +180,18 @@ export default function Login() {
             
             <button
               type="submit"
-              className="mi-btn-primary w-full py-2.5"
+              disabled={isLoading}
+              className={`mi-btn-primary w-full py-2.5 relative ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              登录
+              {isLoading && (
+                <span className="absolute left-1/3 top-1/2 -translate-y-1/2 -translate-x-6 inline-block w-5 h-5">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </span>
+              )}
+              {isLoading ? '登录中...' : '登录'}
             </button>
           </form>
         )}
@@ -170,7 +199,8 @@ export default function Login() {
         <div className="mt-6 text-center space-y-3">
           <button 
             onClick={toggleMode} 
-            className="text-[var(--mi-orange)] hover:underline text-sm block mx-auto"
+            disabled={isLoading || isResetting}
+            className={`text-[var(--mi-orange)] hover:underline text-sm block mx-auto ${(isLoading || isResetting) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isResetMode ? '返回登录' : '忘记密码？'}
           </button>
@@ -185,4 +215,4 @@ export default function Login() {
       </div>
     </main>
   );
-} 
+}
