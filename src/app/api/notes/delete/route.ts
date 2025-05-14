@@ -40,7 +40,7 @@ export async function DELETE(request: NextRequest) {
     fs.unlinkSync(filePath);
     
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting note:', error);
     return NextResponse.json(
       { error: 'Failed to delete note', details: error.message }, 

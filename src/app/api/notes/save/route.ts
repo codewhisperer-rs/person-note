@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     fs.writeFileSync(filePath, fileContent, 'utf8');
     
     return NextResponse.json({ success: true, slug });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving note:', error);
     return NextResponse.json(
       { error: 'Failed to save note', details: error.message }, 

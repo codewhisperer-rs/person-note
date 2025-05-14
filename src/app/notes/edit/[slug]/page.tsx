@@ -21,6 +21,13 @@ export default function EditNote() {
   const router = useRouter();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   
+  // 如果没有 slug，立即重定向到笔记列表
+  useEffect(() => {
+    if (!slug) {
+      router.push('/notes');
+    }
+  }, [slug, router]);
+  
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
@@ -43,7 +50,8 @@ export default function EditNote() {
   };
 
   // 从localStorage获取笔记数据
-  const getNoteFromLocalStorage = (noteSlug: string) => {
+  const getNoteFromLocalStorage = (noteSlug: string | undefined) => {
+    if (!noteSlug) return null;
     try {
       const storedNotes = localStorage.getItem('user_notes');
       if (storedNotes) {
