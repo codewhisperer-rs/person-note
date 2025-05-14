@@ -5,6 +5,7 @@ import Link from 'next/link';
 import LayoutWithSidebar from '@/components/LayoutWithSidebar'; // Import the new component
 import { AuthProvider } from '@/components/AuthProvider'; // 导入认证提供器
 import AuthButton from '@/components/AuthButton'; // 导入认证按钮组件
+import { TechGridBackground, ParticlesBackground, TechAnchors } from '@/components/TechElements';
 
 // 定义笔记相关类型
 interface NoteDataForSidebar {
@@ -42,16 +43,33 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative`}
       >
+        {/* 添加科技感背景元素 */}
+        <TechGridBackground />
+        <ParticlesBackground />
+        <TechAnchors />
+        
         <AuthProvider>
-          <header className="mi-header">
+          <header className="mi-header backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
             <div className="mi-container h-16 flex items-center justify-between">
-              <Link href="/" className="flex items-center">
-                <span className="mi-gradient-text text-xl">我的笔记</span>
+              <Link href="/" className="flex items-center group">
+                <span className="mi-gradient-text text-xl relative overflow-hidden">
+                  我的笔记
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+                </span>
               </Link>
               <nav className="flex items-center space-x-1">
-                <Link href="/" className="mi-nav-link">首页</Link>
-                <Link href="/about" className="mi-nav-link">关于我</Link>
-                <Link href="/notes" className="mi-nav-link">学习笔记</Link>
+                <Link href="/" className="mi-nav-link tech-hover relative overflow-hidden px-4 py-2">
+                  <span className="relative z-10">首页</span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 hover:scale-x-100 transition-transform duration-300"></span>
+                </Link>
+                <Link href="/about" className="mi-nav-link tech-hover relative overflow-hidden px-4 py-2">
+                  <span className="relative z-10">关于我</span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-500 transform scale-x-0 hover:scale-x-100 transition-transform duration-300"></span>
+                </Link>
+                <Link href="/notes" className="mi-nav-link tech-hover relative overflow-hidden px-4 py-2">
+                  <span className="relative z-10">学习笔记</span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 hover:scale-x-100 transition-transform duration-300"></span>
+                </Link>
                 <AuthButton />
               </nav>
             </div>
@@ -60,11 +78,18 @@ export default function RootLayout({
           {/* 使用ClientLayoutWithSidebar组件，让其自行处理客户端数据获取 */}
           <LayoutWithSidebar>{children}</LayoutWithSidebar>
 
-          <footer className="mi-footer py-4 text-center mt-auto">
+          <footer className="mi-footer py-6 text-center mt-auto backdrop-blur-md bg-white/70 dark:bg-gray-800/70 border-t border-gray-200/50 dark:border-gray-700/50">
             <div className="mi-container">
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                © {new Date().getFullYear()} 我的个人笔记 · 保留所有权利
-              </p>
+              <div className="flex flex-col items-center justify-center">
+                <div className="flex items-center space-x-2 mb-3">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></span>
+                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{animationDelay: '1s'}}></span>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  © {new Date().getFullYear()} 我的个人笔记 · <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-green-500">保留所有权利</span>
+                </p>
+              </div>
             </div>
           </footer>
         </AuthProvider>
