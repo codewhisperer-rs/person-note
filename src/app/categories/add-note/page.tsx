@@ -89,6 +89,27 @@ export default function AddNote() {
     }
   };
 
+  // 将笔记保存到文件系统
+  const saveNoteToFileSystem = async (note: Note): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/notes/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(note)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '保存到文件系统失败');
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('保存到文件系统失败:', err);
+      return false;
+    }
+  };
+
   // 处理表单提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,9 +144,16 @@ export default function AddNote() {
       
       // 将笔记保存到localStorage
       saveNoteToLocalStorage(noteObj);
-
-      // 显示成功信息
-      alert(`笔记已创建成功！\n标题: ${title}\n分类: ${category}\n笔记已保存到本地存储。`);
+      
+      // 同时保存到文件系统
+      try {
+        await saveNoteToFileSystem(noteObj);
+        // 显示成功信息
+        alert(`笔记已创建成功！\n标题: ${title}\n分类: ${category}\n笔记已同时保存到本地存储和文件系统。`);
+      } catch (fsError) {
+        console.error('保存到文件系统失败:', fsError);
+        alert(`笔记已创建成功！\n标题: ${title}\n分类: ${category}\n笔记已保存到本地存储，但保存到文件系统失败。`);
+      }
       
       // 重定向到笔记列表页
       router.push('/notes');

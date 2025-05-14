@@ -35,31 +35,67 @@ const getUserNotes = (): Note[] => {
   return [];
 };
 
+// 从文件系统获取笔记
+const getFileSystemNotes = async (): Promise<Note[]> => {
+  try {
+    const response = await fetch('/api/notes', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch notes');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('获取文件系统笔记失败:', error);
+    return [];
+  }
+};
+
 export default function NotesList() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [groupedNotes, setGroupedNotes] = useState<{[category: string]: Note[]}>({});
 
   useEffect(() => {
-    // 短暂延迟以模拟加载
-    const timer = setTimeout(() => {
-      const allNotes = getUserNotes();
-      setNotes(allNotes);
-      
-      // 按分类对笔记进行分组
-      const grouped = allNotes.reduce((acc, note) => {
-        if (!acc[note.category]) {
-          acc[note.category] = [];
-        }
-        acc[note.category].push(note);
-        return acc;
-      }, {} as {[category: string]: Note[]});
-      
-      setGroupedNotes(grouped);
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
+    const loadAllNotes = async () => {
+      try {
+        // 获取localStorage中的笔记
+        const localNotes = getUserNotes();
+        
+        // 获取文件系统中的笔记
+        const fileSystemNotes = await getFileSystemNotes();
+        
+        // 合并笔记，确保不重复（以localStorage为准）
+        const localSlugs = localNotes.map(note => note.slug);
+        const filteredFileNotes = fileSystemNotes.filter(note => 
+          !localSlugs.includes(note.slug)
+        );
+        
+        const allNotes = [...localNotes, ...filteredFileNotes];
+        setNotes(allNotes);
+        
+        // 按分类对笔记进行分组
+        const grouped = allNotes.reduce((acc, note) => {
+          if (!acc[note.category]) {
+            acc[note.category] = [];
+          }
+          acc[note.category].push(note);
+          return acc;
+        }, {} as {[category: string]: Note[]});
+        
+        setGroupedNotes(grouped);
+        setLoading(false);
+      } catch (error) {
+        console.error('加载笔记失败:', error);
+        setLoading(false);
+      }
+    };
+    
+    loadAllNotes();
   }, []);
 
   if (loading) {

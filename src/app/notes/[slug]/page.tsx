@@ -23,19 +23,37 @@ interface Heading {
   level: number;
 }
 
-// 从localStorage获取指定笔记
+// 获取指定笔记
 const getNoteBySlug = async (slug: string): Promise<Note> => {
   if (typeof window === 'undefined') {
     throw new Error('笔记未找到');
   }
   
+  // 先尝试从localStorage获取
   const storedNotes = localStorage.getItem('user_notes');
-  if (!storedNotes) {
-    throw new Error('笔记未找到');
+  let localNote = null;
+  
+  if (storedNotes) {
+    try {
+      const notes: Note[] = JSON.parse(storedNotes);
+      localNote = notes.find(n => n.slug === slug);
+    } catch (err) {
+      console.error('解析本地笔记数据失败:', err);
+    }
   }
   
+  if (localNote) {
+    return localNote;
+  }
+  
+  // 如果localStorage中没有，则尝试从文件系统获取
   try {
-    const notes: Note[] = JSON.parse(storedNotes);
+    const response = await fetch(`/api/notes`);
+    if (!response.ok) {
+      throw new Error('获取笔记失败');
+    }
+    
+    const notes: Note[] = await response.json();
     const note = notes.find(n => n.slug === slug);
     
     if (!note) {
@@ -80,6 +98,9 @@ export default function NotePage() {
   useEffect(() => {
     const fetchNote = async () => {
       try {
+        if (!slug) {
+          throw new Error('无效的笔记标识');
+        }
         const noteData = await getNoteBySlug(slug);
         setNote(noteData);
         
@@ -103,6 +124,26 @@ export default function NotePage() {
     // 检查用户认证状态
     checkAuth();
   }, [slug, checkAuth]);
+
+  // 从文件系统删除笔记
+  const deleteNoteFromFileSystem = async (noteSlug: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/notes/delete?slug=${encodeURIComponent(noteSlug)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '从文件系统删除笔记失败');
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('从文件系统删除笔记失败:', err);
+      return false;
+    }
+  };
 
   // 处理笔记删除
   const handleDelete = async () => {
@@ -128,6 +169,17 @@ export default function NotePage() {
         // 触发自定义事件，通知侧边栏更新数据
         const event = new Event('noteDataChanged');
         window.dispatchEvent(event);
+      }
+      
+      // 同时从文件系统删除笔记
+      if (slug) {
+        try {
+          await deleteNoteFromFileSystem(slug);
+          console.log('笔记已从文件系统删除');
+        } catch (fsError) {
+          console.error('从文件系统删除笔记失败:', fsError);
+          // 继续执行，因为已经从localStorage删除了
+        }
       }
       
       alert('笔记已成功删除！');
