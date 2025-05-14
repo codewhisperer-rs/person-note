@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Tag from '@/components/Tag'; // Import the Tag component
+import { FumadocsCard } from '@/components/FumadocsCard';
 
 // 定义笔记类型接口
 interface Note {
@@ -114,21 +115,23 @@ export default function NotesList() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categoryNotes.map((note) => (
-                <div key={note.slug} className="mi-card p-5 hover:border-[var(--mi-orange)] transition-all duration-300">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="mi-tag mi-tag-orange">
-                      {new Date(note.date).toLocaleDateString('zh-CN')}
-                    </span>
+                <div key={note.slug} className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white p-5 transition-all hover:border-gray-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950 dark:hover:border-gray-700">
+                  <div className="mb-3">
+                    <div className="flex justify-between items-start">
+                      <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                        {new Date(note.date).toLocaleDateString('zh-CN')}
+                      </span>
+                    </div>
                   </div>
                   
                   <Link href={`/notes/${note.slug}`} className="block">
-                    <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-white hover:text-[var(--mi-orange)] dark:hover:text-[var(--mi-orange)] transition-colors">
+                    <h3 className="text-lg font-medium mb-3 text-gray-950 dark:text-white group-hover:text-[var(--mi-orange)] dark:group-hover:text-[var(--mi-orange)] transition-colors">
                       {note.title}
                     </h3>
                   </Link>
                   
                   {note.summary && (
-                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-3">
                       {note.summary}
                     </p>
                   )}
@@ -141,7 +144,7 @@ export default function NotesList() {
                     </div>
                   )}
                   
-                  <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
                     <Link 
                       href={`/notes/${note.slug}`} 
                       className="inline-flex items-center text-sm font-medium text-[var(--mi-orange)]"
@@ -152,6 +155,8 @@ export default function NotesList() {
                       </svg>
                     </Link>
                   </div>
+                  
+                  <div className="absolute bottom-0 left-0 h-1 w-full scale-x-0 transform bg-gradient-to-r from-[var(--mi-orange)] to-orange-500 transition-transform duration-300 group-hover:scale-x-100" />
                 </div>
               ))}
             </div>

@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative pb-20`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col relative`}
       >
         <AuthProvider>
           <header className="mi-header">
@@ -60,7 +60,7 @@ export default function RootLayout({
           {/* 使用ClientLayoutWithSidebar组件，让其自行处理客户端数据获取 */}
           <LayoutWithSidebar>{children}</LayoutWithSidebar>
 
-          <footer className="mi-footer py-4 fixed bottom-0 left-0 right-0 w-full text-center">
+          <footer className="mi-footer py-4 text-center mt-auto">
             <div className="mi-container">
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 © {new Date().getFullYear()} 我的个人笔记 · 保留所有权利

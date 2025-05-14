@@ -3,6 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import Link from 'next/link';
 import Tag from '@/components/Tag';
+import { FumadocsCard, FumadocsCardGrid } from '@/components/FumadocsCard';
 
 const notesDirectory = path.join(process.cwd(), 'content/notes');
 
@@ -49,7 +50,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { category: string } }) {
     const categoryName = params.category;
     return {
-      title: `Notes in category "${categoryName}"`, // Dynamic title
+      title: `分类: "${categoryName}"的笔记`, // Dynamic title
     };
   }
 
@@ -71,35 +72,67 @@ export default function CategoryPage({ params }: { params: { category: string } 
 
   return (
     <main className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">Category: "{categoryName}"</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold mi-gradient-text">分类: "{categoryName}"</h1>
+        <Link 
+          href="/categories" 
+          className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        >
+          返回所有分类
+        </Link>
+      </div>
+      <FumadocsCardGrid>
         {filteredNotes.map(({ slug, title, date, summary, tags }) => (
-          <div key={slug} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-transform transform hover:scale-105 hover:shadow-md">
+          <div key={slug} className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white p-5 transition-all hover:border-gray-300 hover:shadow-lg dark:border-gray-800 dark:bg-gray-950 dark:hover:border-gray-700">
+            <div className="mb-3">
+              <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                {new Date(date).toLocaleDateString()}
+              </span>
+            </div>
+            
             <Link href={`/notes/${slug}`} className="block">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:underline">
+              <h2 className="text-lg font-medium mb-3 text-gray-950 dark:text-white group-hover:text-[var(--mi-orange)] dark:group-hover:text-[var(--mi-orange)] transition-colors">
                 {title}
               </h2>
             </Link>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-              {new Date(date).toLocaleDateString()}
-            </p>
+            
             {summary && (
-              <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-3">
                 {summary}
               </p>
             )}
+            
             {tags && tags.length > 0 && (
-              <div className="mt-auto flex flex-wrap">
+              <div className="flex flex-wrap gap-1 mb-4">
                 {tags.map((tag) => (
                   <Tag key={tag} text={tag} />
                 ))}
               </div>
             )}
+            
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
+              <Link 
+                href={`/notes/${slug}`} 
+                className="inline-flex items-center text-sm font-medium text-[var(--mi-orange)]"
+              >
+                阅读全文
+                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
+              </Link>
+            </div>
+            
+            <div className="absolute bottom-0 left-0 h-1 w-full scale-x-0 transform bg-gradient-to-r from-[var(--mi-orange)] to-orange-500 transition-transform duration-300 group-hover:scale-x-100" />
           </div>
         ))}
-      </div>
+      </FumadocsCardGrid>
       {filteredNotes.length === 0 && (
-          <p className="text-center text-gray-600 dark:text-gray-400">No notes found in this category.</p>
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">该分类下暂无笔记</p>
+          <Link href="/categories/add-note" className="mi-btn-primary">
+            创建笔记
+          </Link>
+        </div>
        )}
     </main>
   );

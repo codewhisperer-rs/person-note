@@ -1,6 +1,8 @@
+import { FumadocsCard, FumadocsCardGrid } from '@/components/FumadocsCard';
+
 export default function Home() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center">
+    <main className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] text-center px-4">
       <div className="relative mb-10 mi-fade-in">
         <h1 className="text-4xl md:text-6xl font-bold mb-4 mi-gradient-text">
           科技改变生活
@@ -14,24 +16,29 @@ export default function Home() {
         探索技术，分享见解，记录我的<span className="text-[var(--mi-orange)] font-semibold">知识</span>成长之旅。
       </p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12 w-full max-w-4xl">
-        <div className="mi-card p-6 mi-slide-up" style={{animationDelay: '0ms'}}>
-          <div className="text-[var(--mi-orange)] mb-3 text-3xl">📝</div>
-          <h3 className="text-lg font-semibold mb-2">学习笔记</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">浏览我的技术学习记录和心得体会</p>
-          <a href="/notes" className="mi-btn-primary">
-            查看笔记
-          </a>
-        </div>
-        
-        <div className="mi-card p-6 mi-slide-up" style={{animationDelay: '200ms'}}>
-          <div className="text-[var(--mi-orange)] mb-3 text-3xl">👤</div>
-          <h3 className="text-lg font-semibold mb-2">关于我</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">了解我的背景、技能和专业领域</p>
-          <a href="/about" className="mi-btn-text">
-            个人介绍
-          </a>
-        </div>
+      <div className="w-full max-w-4xl mb-12">
+        <FumadocsCardGrid>
+          <FumadocsCard 
+            title="学习笔记" 
+            description="浏览我的技术学习记录和心得体会" 
+            href="/notes" 
+            icon={<span className="text-xl">📝</span>}
+          />
+          
+          <FumadocsCard 
+            title="关于我" 
+            description="了解我的背景、技能和专业领域" 
+            href="/about" 
+            icon={<span className="text-xl">👤</span>}
+          />
+          
+          <FumadocsCard 
+            title="分类管理" 
+            description="按分类查看所有笔记内容" 
+            href="/categories" 
+            icon={<span className="text-xl">📂</span>}
+          />
+        </FumadocsCardGrid>
       </div>
       
       <div className="w-full max-w-4xl mi-card bg-white/80 dark:bg-gray-800/80 p-6 backdrop-blur-sm">
