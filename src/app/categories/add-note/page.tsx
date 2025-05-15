@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AdminRoute from '@/components/AdminRoute';
@@ -16,7 +16,8 @@ interface Note {
   category: string;
 }
 
-export default function AddNote() {
+// 新建一个内部组件来包含原有的逻辑
+function AddNoteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const category = searchParams.get('category') || '';
@@ -254,20 +255,19 @@ export default function AddNote() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all relative ${loading ? 'opacity-70 cursor-not-allowed pl-8' : ''}`}
-                  onClick={(e) => {
-                    if (loading) e.preventDefault();
-                  }}
+                  className={`px-6 py-2 text-white rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900 flex items-center justify-center space-x-2
+                    ${loading 
+                      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:ring-blue-500 dark:focus:ring-purple-600'}
+                  `}
                 >
                   {loading && (
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 inline-block w-5 h-5">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                    </span>
                   )}
-                  {loading ? '保存中...' : '保存笔记'}
+                  {loading ? '创建中...' : '创建笔记'}
                 </button>
               </div>
             </div>
@@ -275,5 +275,14 @@ export default function AddNote() {
         </div>
       </main>
     </AdminRoute>
+  );
+}
+
+// 原始页面组件现在只负责渲染 Suspense 和内部组件
+export default function AddNotePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddNoteContent />
+    </Suspense>
   );
 } 

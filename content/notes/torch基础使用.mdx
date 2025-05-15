@@ -1,0 +1,17 @@
+---
+title: torch基础使用
+date: '2025-05-15'
+tags:
+  - torch，numpy
+summary: >-
+  | 操作              | NumPy                                  |
+  PyTorch                               |
+
+  |-------------------|----------------------------...
+category: Pytorch
+---
+| 操作              | NumPy                                  | PyTorch                               |
+|-------------------|-----------------------------------------|----------------------------------------|
+| 向量点积（1D）     | `np.dot(a, b)`                          | `torch.dot(a, b)`                      |
+| 矩阵乘法（2D）     | `np.dot(a, b)` 或 `np.matmul(a, b)`     | `torch.matmul(a, b)` 或 `a @ b`        |
+| 不适用的写法       | —                                       | `torch.dot(tensor @ tensor)` ❌<br>`tensor.dot(...)` ❌ |

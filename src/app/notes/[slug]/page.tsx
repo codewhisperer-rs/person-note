@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // 定义笔记类型接口
 interface Note {
@@ -25,46 +27,37 @@ interface Heading {
 
 // 获取指定笔记
 const getNoteBySlug = async (slug: string): Promise<Note> => {
-  if (typeof window === 'undefined') {
-    throw new Error('笔记未找到');
-  }
-  
-  // 先尝试从localStorage获取
-  const storedNotes = localStorage.getItem('user_notes');
-  let localNote = null;
-  
-  if (storedNotes) {
-    try {
-      const notes: Note[] = JSON.parse(storedNotes);
-      localNote = notes.find(n => n.slug === slug);
-    } catch (err) {
-      console.error('解析本地笔记数据失败:', err);
-    }
-  }
-  
-  if (localNote) {
-    return localNote;
-  }
-  
-  // 如果localStorage中没有，则尝试从文件系统获取
+  // 主要尝试从API获取笔记
   try {
-    const response = await fetch(`/api/notes`);
-    if (!response.ok) {
-      throw new Error('获取笔记失败');
+    // 注意：移除了 encodeURIComponent，因为 Next.js 的 params.slug 通常是解码后的字符串
+    // API 路由期望接收解码后的 slug 来匹配文件名
+    const response = await fetch(`/api/notes/${slug}`); 
+    if (response.ok) {
+      const note = await response.json();
+      if (note && note.slug) { 
+        return note;
+      }
+    } else if (response.status === 404) {
+      // 如果API明确返回404，说明文件系统没有此笔记
+      throw new Error('笔记未在服务器上找到'); 
     }
-    
-    const notes: Note[] = await response.json();
-    const note = notes.find(n => n.slug === slug);
-    
-    if (!note) {
-      throw new Error('笔记未找到');
+    // 其他非OK状态码，也视为获取失败
+    throw new Error(`API请求失败，状态码: ${response.status}`);
+  } catch (apiError: any) {
+    console.error('API获取笔记主流程失败:', apiError.message);
+    // 如果是因为笔记未在服务器找到而抛出的错误，直接再次抛出
+    if (apiError.message === '笔记未在服务器上找到') {
+      throw apiError;
     }
-    
-    return note;
-  } catch (err) {
-    console.error('获取笔记失败:', err);
-    throw new Error('笔记未找到');
+    // 对于其他类型的API错误（如网络问题），可以考虑备用方案
+    // 在这里，我们暂时不添加localStorage回退，以保持数据源单一
+    // 如果确实需要，可以在此处添加对localStorage的检查
+    // console.warn('API彻底失败，此处可选择尝试localStorage');
+    throw new Error('获取笔记过程中发生错误'); // 抛出一个通用错误
   }
+  // 此处不应该到达，因为上面的逻辑要么返回笔记，要么抛出错误
+  // 为确保函数总有返回值或抛出异常，添加一个最终的错误抛出
+  // throw new Error('未能获取笔记，逻辑流程意外结束');
 };
 
 export default function NotePage() {
@@ -252,47 +245,6 @@ export default function NotePage() {
     );
   }
 
-  // 将 Markdown 内容转换为 HTML（简单实现）
-  const renderMarkdown = (content: string) => {
-    // 对内容中的标题添加ID，以支持锚点跳转
-    let processedContent = content;
-    headings.forEach((heading, index) => {
-      const hashes = '#'.repeat(heading.level);
-      const headingText = heading.text;
-      const headingRegex = new RegExp(`^${hashes}\\s+${escapeRegExp(headingText)}$`, 'm');
-      processedContent = processedContent.replace(
-        headingRegex,
-        `${hashes} <a id="${heading.id}" class="anchor-heading"></a>${headingText}`
-      );
-    });
-    
-    // 这里只做了非常简单的转换，实际应用中应使用专业的 Markdown 解析库
-    let html = processedContent
-      // 转换标题
-      .replace(/## <a id="(.*?)" class="anchor-heading"><\/a>(.*)/g, '<h2 id="$1" class="text-2xl font-bold my-4">$2</h2>')
-      .replace(/# <a id="(.*?)" class="anchor-heading"><\/a>(.*)/g, '<h1 id="$1" class="text-3xl font-bold my-4">$2</h1>')
-      .replace(/### <a id="(.*?)" class="anchor-heading"><\/a>(.*)/g, '<h3 id="$1" class="text-xl font-bold my-4">$2</h3>')
-      // 转换粗体
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      // 转换斜体
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // 转换代码块
-      .replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded-md overflow-x-auto my-4"><code>$1</code></pre>')
-      // 转换行内代码
-      .replace(/`(.*?)`/g, '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">$1</code>')
-      // 转换段落
-      .split('\n\n')
-      .map(p => `<p class="mb-4">${p}</p>`)
-      .join('');
-    
-    return { __html: html };
-  };
-  
-  // 辅助函数：转义正则表达式中的特殊字符
-  function escapeRegExp(string: string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-  
   // 切换目录显示
   const toggleToc = () => {
     setShowToc(!showToc);
@@ -361,7 +313,9 @@ export default function NotePage() {
         {/* 笔记内容 - 左侧区域 */}
         <div className="lg:w-3/4 order-2 lg:order-1">
           <div className="prose dark:prose-invert max-w-none">
-            <div dangerouslySetInnerHTML={renderMarkdown(note.content)} />
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {note.content}
+            </ReactMarkdown>
           </div>
           
           {/* 底部导航 */}

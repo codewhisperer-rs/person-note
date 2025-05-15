@@ -16,6 +16,25 @@ interface Note {
   category: string;
 }
 
+// 辅助函数：从API获取笔记，与查看页面逻辑类似
+const fetchNoteDataFromApi = async (slug: string): Promise<Note | null> => {
+  try {
+    const response = await fetch(`/api/notes/${slug}`);
+    if (response.ok) {
+      const note = await response.json();
+      if (note && note.slug) {
+        return note;
+      }
+    }
+    // 对于404或其他错误，这里不直接抛出，而是返回null，让调用者决定如何处理
+    console.warn(`API fetch for note ${slug} returned status: ${response.status}`);
+    return null;
+  } catch (apiError: any) {
+    console.error('API获取笔记数据失败 (编辑模式):', apiError.message);
+    return null;
+  }
+};
+
 export default function EditNote() {
   const params = useParams();
   const router = useRouter();
@@ -38,6 +57,7 @@ export default function EditNote() {
   const [defaultCategories, setDefaultCategories] = useState<string[]>(['C++', 'Rust', 'Pytorch', 'CUDA', 'Uncategorized']);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [textareaHeight, setTextareaHeight] = useState('300px'); // 初始高度
+  const [originalDate, setOriginalDate] = useState<string | null>(null); // 新增状态来保存原始日期
 
   // 处理文本框内容变化，自动调整高度
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -49,14 +69,14 @@ export default function EditNote() {
     setTextareaHeight(`${newHeight}px`);
   };
 
-  // 从localStorage获取笔记数据
-  const getNoteFromLocalStorage = (noteSlug: string | undefined) => {
+  // 从localStorage获取笔记数据 (作为备用)
+  const getNoteFromLocalStorage = (noteSlug: string | undefined): Note | null => {
     if (!noteSlug) return null;
     try {
       const storedNotes = localStorage.getItem('user_notes');
       if (storedNotes) {
         const notes: Note[] = JSON.parse(storedNotes);
-        return notes.find(note => note.slug === noteSlug);
+        return notes.find(note => note.slug === noteSlug) || null;
       }
       return null;
     } catch (err) {
@@ -68,36 +88,41 @@ export default function EditNote() {
   // 加载笔记数据
   useEffect(() => {
     const fetchNote = async () => {
-      if (!slug) return;
-      try {
-        const note = getNoteFromLocalStorage(slug);
-        
-        if (note) {
-          setTitle(note.title);
-          setContent(note.content);
-          setCategory(note.category);
-          setTags(note.tags.join(', '));
-          
-          // 设置文本框初始高度
-          setTimeout(() => {
-            const textarea = document.getElementById('content') as HTMLTextAreaElement;
-            if (textarea) {
-              const scrollHeight = textarea.scrollHeight;
-              const minHeight = 300;
-              const newHeight = Math.max(scrollHeight, minHeight);
-              setTextareaHeight(`${newHeight}px`);
-            }
-          }, 0);
-        } else {
-          setError('找不到此笔记');
-        }
-        
+      if (!slug) {
         setLoading(false);
-      } catch (err) {
-        console.error('加载笔记失败:', err);
-        setError('无法加载笔记内容');
-        setLoading(false);
+        setError('无效的笔记标识');
+        return;
       }
+      setLoading(true);
+      let noteData = await fetchNoteDataFromApi(slug);
+
+      if (!noteData && typeof window !== 'undefined') { 
+        console.warn(`API未能获取笔记 ${slug}，尝试从 localStorage 加载。`);
+        noteData = getNoteFromLocalStorage(slug);
+      }
+      
+      if (noteData) {
+        setTitle(noteData.title);
+        setContent(noteData.content);
+        setCategory(noteData.category);
+        setTags(noteData.tags.join(', '));
+        setOriginalDate(noteData.date); // 保存原始日期
+        
+        // 设置文本框初始高度
+        setTimeout(() => {
+          const textarea = document.getElementById('content') as HTMLTextAreaElement;
+          if (textarea) {
+            const scrollHeight = textarea.scrollHeight;
+            const minHeight = 300;
+            const newHeight = Math.max(scrollHeight, minHeight);
+            setTextareaHeight(`${newHeight}px`);
+          }
+        }, 0);
+        setError('');
+      } else {
+        setError('找不到此笔记，或无法从任何来源加载。');
+      }
+      setLoading(false);
     };
 
     // 加载自定义分类
@@ -173,57 +198,64 @@ export default function EditNote() {
       return;
     }
     
+    if (!slug) {
+        setError('笔记标识丢失，无法保存。');
+        setSaving(false); // 确保重置 saving 状态
+        return;
+    }
+
+    // 检查 originalDate 是否已加载。如果为 null，可能意味着笔记是全新的或加载失败。
+    // 对于"编辑"操作，我们通常期望 originalDate 是存在的。
+    // 如果 originalDate 为 null，且我们确定这不是一个"创建新笔记"的场景，则应报错。
+    if (originalDate === null) {
+        // 这里我们假设编辑的笔记必须是已存在的，因此 originalDate 必须有值
+        // 如果逻辑允许通过编辑页面创建新笔记，则这里的处理会不同
+        setError('无法获取原始笔记的创建日期，保存操作中止。请确保笔记已正确加载。');
+        setSaving(false);
+        return;
+    }
+
     setSaving(true);
     setError('');
 
     try {
-      // 准备笔记数据
       const tagsList = tags
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag);
       
-      // 创建更新后的笔记对象
-      const currentNote = getNoteFromLocalStorage(slug);
-      if (!currentNote) {
-        throw new Error('找不到原始笔记');
-      }
-
       const updatedNote: Note = {
-        ...currentNote,
+        slug: slug,
         title,
+        date: originalDate, // 强制使用加载时获取的 originalDate
+        summary: content.slice(0, 150) + (content.length > 150 ? '...' : ''),
         content,
-        category,
         tags: tagsList,
-        summary: content.slice(0, 150) + (content.length > 150 ? '...' : '')
+        category
       };
 
-      // 保存到localStorage
-      const success = saveNoteToLocalStorage(updatedNote);
-      
-      // 保存到文件系统
+      // 首先尝试保存到文件系统，因为这是权威数据源
       try {
         await saveNoteToFileSystem(updatedNote);
-        if (success) {
-          alert('笔记已成功更新，并同步到文件系统！');
-          router.push(`/notes/${slug}`);
-        } else {
-          throw new Error('保存笔记失败');
-        }
-      } catch (fsError) {
-        console.error('保存到文件系统失败:', fsError);
+        // 文件系统保存成功后，再尝试更新 localStorage
+        const localStorageSuccess = saveNoteToLocalStorage(updatedNote);
         
-        // 本地存储成功但文件系统失败
-        if (success) {
-          alert('笔记已更新到本地存储，但同步到文件系统失败。');
-          router.push(`/notes/${slug}`);
+        if (localStorageSuccess) {
+          alert('笔记已成功更新，并同步到文件系统及本地存储！');
         } else {
-          throw new Error('保存笔记失败');
+          alert('笔记已同步到文件系统，但本地存储更新失败。');
         }
+        router.push(`/notes/${slug}`); // 无论 localStorage 如何，文件系统成功就跳转
+
+      } catch (fsError: any) {
+        console.error('保存到文件系统失败:', fsError.message);
+        setError(`保存到文件系统失败: ${fsError.message}。本地更改尚未同步。`);
+        setSaving(false); // 允许用户再次尝试或进行其他操作
+        // 注意：这里没有尝试更新 localStorage，因为权威源失败了
       }
-    } catch (err) {
-      console.error('更新笔记失败:', err);
-      setError('更新笔记失败，请重试');
+    } catch (err: any) { 
+      console.error('构建更新数据或执行保存前发生意外错误:', err.message);
+      setError(`更新笔记时发生意外错误: ${err.message}`);
       setSaving(false);
     }
   };

@@ -110,63 +110,28 @@
   li {
     margin-bottom: 0.5rem;
   }
-}
-
-/* Adjusting prose styles for better integration and Fuma-like details */
-@layer components {
-  .prose :where(h1):not(:where([class~="not-prose"] *)) {
-    margin-top: 0 !important;
-  }
-
-  /* Custom styles for code blocks */
-  .prose :where(pre):not(:where([class~="not-prose"] *)) {
-    background-color: var(--code-background);
-    color: var(--code-text);
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--code-border);
-    overflow-x: auto; /* Add horizontal scroll for long lines */
-    margin-top: 1.5em;
-    margin-bottom: 1.5em;
-  }
-
-  .prose :where(code):not(:where([class~="not-prose"] *)) {
-     /* Inline code */
-    background-color: var(--code-background);
-    color: var(--code-text);
-    padding: 0.2em 0.4em;
-    border-radius: 0.3em;
-    font-size: 0.875em;
-    font-family: var(--font-geist-mono), monospace;
-  }
-
-  /* Ensure pre > code doesn't inherit inline code styles */
-  .prose :where(pre):not(:where([class~="not-prose"] *)) > :where(code):not(:where([class~="not-prose"] *)) {
-    all: unset; /* Reset all styles */
-    color: inherit;
-    font-size: inherit;
-    font-family: inherit;
-    padding: 0;
-    border-radius: 0;
-    background-color: transparent;
-  }
-
-  /* Custom styles for lists */
-  .prose :where(ul):not(:where([class~="not-prose"] *)) {
-    list-style: disc; /* Ensure bullet points */
-  }
-
-   .prose :where(ol):not(:where([class~="not-prose"] *)) {
-    list-style: decimal; /* Ensure numbers */
-  }
-
-  .prose :where(li):not(:where([class~="not-prose"] *)) {
-    margin-bottom: 0.5rem; /* Adjust spacing between list items */
-  }
 
   .prose :where(li):not(:where([class~="not-prose"] *))::marker {
     color: var(--text-light); /* Style list markers */
   }
+}
+
+/* Custom styles for tables within .prose */
+.prose table {
+  @apply border-collapse border border-gray-300 dark:border-gray-600 w-full my-6;
+}
+
+.prose th,
+.prose td {
+  @apply border border-gray-300 dark:border-gray-600 px-4 py-2 text-left;
+}
+
+.prose thead th {
+  @apply bg-gray-100 dark:bg-gray-700 font-semibold;
+}
+
+.prose tbody tr:nth-child(even) {
+  @apply bg-gray-50 dark:bg-gray-800/30;
 }
 
 /* Adjusting prose styles for better integration */
